@@ -93,7 +93,14 @@ function UpdateBadges() {
       var notification = new Audio('ding.mp3');
       for (var i = 1; i <= minutes; i++) {
         var wait = i * 500;
-        setTimeout(function () { notification.play() }, wait);
+        setTimeout(function () {
+          console.log('notifying!')
+          notification.play()
+          chrome.runTime.sendMessage({ from: 'background', subject: 'invert' })
+          setTimeout(function () {
+            chrome.runTime.sendMessage({ from: 'background', subject: 'uninvert' })
+          }, 3000)
+        }, wait);
       }
     }
   }
