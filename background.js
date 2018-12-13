@@ -19,6 +19,17 @@ var History = {};
 chrome.browserAction.setBadgeText({ 'text': '?'});
 chrome.browserAction.setBadgeBackgroundColor({ 'color': "#777" });
 
+function FormatDuration(d) {
+  if (d < 0) {
+    return "?";
+  }
+  var divisor = d < 3600000 ? [60000, 1000] : [3600000, 60000];
+  function pad(x) {
+    return x < 10 ? "0" + x : x;
+  }
+  return Math.floor(d / divisor[0]) + ":" + pad(Math.floor((d % divisor[0]) / divisor[1]));
+}
+
 function Update(t, tabId, url) {
   if (!url) {
     return;
@@ -89,17 +100,22 @@ function UpdateBadges() {
 
     // background.console.log({ isBlacklisted, blacklistMatches, currentUrl, minutes, seconds, timeDiffSeconds });
 
+    const sendCmd = function (cmd) {
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, { cmd })
+      })
+    }
+
     if (notify && !isBlacklisted && minutes > 0 && seconds === 0 && minutes <= notify_max && timeDiffSeconds < 3600) {
       var notification = new Audio('ding.mp3');
       for (var i = 1; i <= minutes; i++) {
         var wait = i * 500;
         setTimeout(function () {
-          console.log('notifying!')
           notification.play()
-          chrome.runTime.sendMessage({ from: 'background', subject: 'invert' })
+          sendCmd('invert')
           setTimeout(function () {
-            chrome.runTime.sendMessage({ from: 'background', subject: 'uninvert' })
-          }, 3000)
+            sendCmd('uninvert')
+          }, 200)
         }, wait);
       }
     }
